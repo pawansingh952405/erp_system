@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Purchase Order</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white"><h4>New Purchase Order</h4></div>
+        <div class="card-body">
+            <form id="po-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Reference Number</label>
+                        <input type="text" id="ref_no" class="form-control" placeholder="PO-1001" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Vendor</label>
+                        <select id="vendor_select" class="form-select" required>
+                            </select>
+                    </div>
+                </div>
+
+                <h5>Items</h5>
+                <div id="items-container">
+                    </div>
+                
+                <button type="button" class="btn btn-outline-secondary mb-3" onclick="addItemRow()">+ Add Product</button>
+                <hr>
+                <button type="submit" class="btn btn-success w-100">Submit Purchase Order</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Load Vendors on page load
+    async function initForm() {
+        const vRes = await fetch('http://127.0.0.1:8000/vendors');
+        const vendors = await vRes.json();
+        const vSelect = document.getElementById('vendor_select');
+        vendors.forEach(v => {
+            vSelect.innerHTML += `<option value="${v.id}">${v.name}</option>`;
+        });
+        
+        // Add the first empty row automatically
+        addItemRow();
+    }
+
+    // 2. The "Add Row" Logic
+    async function addItemRow() {
+        const pRes = await fetch('http://127.0.0.1:8000/products');
+        const products = await pRes.json();
+        
+        const container = document.getElementById('items-container');
+        const rowId = Date.now(); 
+        
+        const rowHtml = `
+        <div class="row mb-2 item-row" id="row-${rowId}">
+            <div class="col-md-3">
+                <select class="form-select product-select" id="select-${rowId}">
+                    ${products.map(p => `<option value="${p.id}" data-name="${p.name}" data-price="${p.unit_price}">${p.name} ($${p.unit_price})</option>`).join('')}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control quantity-input" value="1" min="1">
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" id="desc-${rowId}" placeholder="Product description...">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-warning btn-sm w-100" onclick="generateAI('${rowId}')">✨ Auto-Desc</button>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm w-100" onclick="document.getElementById('row-${rowId}').remove()">Remove</button>
+            </div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', rowHtml);
+    }
+
+    // 3. Handle Submit
+    document.getElementById('po-form').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const rows = document.querySelectorAll('.item-row');
+        const items = [];
+        
+        rows.forEach(row => {
+            const select = row.querySelector('.product-select');
+            const qtyInput = row.querySelector('.quantity-input');
+            
+            items.push({
+                product_id: parseInt(select.value),
+                quantity: parseInt(qtyInput.value),
+                // This fetches the price we stored in the 'data-price' attribute
+                unit_price: parseFloat(select.options[select.selectedIndex].getAttribute('data-price'))
+            });
+        });
+
+        const payload = {
+            reference_no: document.getElementById('ref_no').value,
+            vendor_id: parseInt(document.getElementById('vendor_select').value),
+            items: items
+        };
+
+        const response = await fetch('http://127.0.0.1:8000/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert("PO Created Successfully!");
+            window.location.href = 'index.html';
+        } else {
+            alert("Error creating PO. Check if Reference Number is unique.");
+        }
+    };
+
+    // 4. AI Logic
+    async function generateAI(rowId) {
+        const select = document.getElementById(`select-${rowId}`);
+        const productName = select.options[select.selectedIndex].getAttribute('data-name');
+        const inputField = document.getElementById(`desc-${rowId}`);
+
+        inputField.value = "AI is thinking..."; 
+
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/ai-description/${productName}`);
+            const data = await response.json();
+            inputField.value = data.description;
+        } catch (error) {
+            inputField.value = "Error generating description.";
+        }
+    }
+
+    window.onload = initForm;
+</script>
+</body>
+</html>

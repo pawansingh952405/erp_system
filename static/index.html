@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IV Innovations - PO Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">IV Innovations ERP</span>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Purchase Orders</h2>
+        <button class="btn btn-primary" onclick="location.href='create_po.html'">+ Create New PO</button>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Ref No</th>
+                        <th>Vendor</th>
+                        <th>Total Amount (Incl. 5% Tax)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="po-table-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

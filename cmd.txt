@@ -1,0 +1,13 @@
+virual environment ke liye-
+.\venv\Scripts\activate
+
+
+
+library ke kiye-
+pip install fastapi uvicorn sqlalchemy psycopg2 requests pymongo
+
+
+
+reload ke liye-
+
+uvicorn main:app --reload
